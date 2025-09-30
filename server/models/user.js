@@ -1,6 +1,6 @@
 //user data modeling
 
-import mongoose from 'mongoose';
+import mongoose, {Schema} from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
@@ -23,3 +23,8 @@ const userSchema = new mongoose.Schema(
 )
 
 export const User = mongoose.model("User", userSchema);
+export default User;
+
+function string(string) {
+    throw new Error('Function not implemented.');
+}
