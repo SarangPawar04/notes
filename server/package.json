@@ -14,9 +14,13 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cloudinary": "^1.41.3",
     "dotenv": "^16.1.4",
     "express": "^5.1.0",
-    "mongoose": "^7.6.0"
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.6.0",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
