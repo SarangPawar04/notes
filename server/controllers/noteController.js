@@ -1,10 +1,14 @@
 import Note from "../models/note.js";
+import { uploadFile } from "../utils/uploadFile.js";
 
 //create a note 
 export const createNote = async (req, res) =>{
     try {
         
-        const {title, description, fileUrl, category} = req.body;
+        const {title, description, category} = req.body;
+
+        //upload file to cloudinary 
+        const fileUrl = await uploadFile(req.file.path);
 
         //check if all fields are there
         if(!title || !fileUrl || !category){
