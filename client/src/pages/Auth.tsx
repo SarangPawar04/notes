@@ -35,7 +35,7 @@ export const Auth = ({ onLogin, onContinueAsGuest }: AuthProps) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
@@ -77,7 +77,7 @@ export const Auth = ({ onLogin, onContinueAsGuest }: AuthProps) => {
           return;
         }
       }
-      const res = await fetch("/api/auth/forgot", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/forgot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailToUse }),
@@ -103,7 +103,7 @@ export const Auth = ({ onLogin, onContinueAsGuest }: AuthProps) => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userName: signupName, email: signupEmail, password: signupPassword }),

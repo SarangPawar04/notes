@@ -66,7 +66,7 @@ const App = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
     const isSaved = savedNoteIds.has(noteId);
-    const res = await fetch(`/api/saved/${noteId}`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saved/${noteId}`, {
       method: isSaved ? "DELETE" : "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -156,7 +156,7 @@ const App = () => {
   const handleDeleteNote = async (noteId: string) => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    const res = await fetch(`/api/notes/${noteId}`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${noteId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -186,7 +186,7 @@ const App = () => {
   });
 
   const fetchNotes = async () => {
-    const res = await fetch("/api/notes");
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes`);
     const data = await res.json();
     if (res.ok && data?.success) {
       setNotes(data.notes.map(mapApiNote));
@@ -196,13 +196,16 @@ const App = () => {
   const fetchSaved = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    const res = await fetch("/api/saved", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saved`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     if (res.ok && data?.success) {
       const ids = new Set<string>(data.notes.map((n: any) => n._id));
       setSavedNoteIds(ids);
     }
   };
+
+console.log("🔗 API URL:", import.meta.env.VITE_API_URL);
+
 
   useEffect(() => {
     // Only auto-login if explicitly coming from a successful auth flow

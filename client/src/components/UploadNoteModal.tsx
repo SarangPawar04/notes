@@ -50,7 +50,7 @@ export const UploadNoteModal = ({ open, onClose, onUpload }: UploadNoteModalProp
         const formData = new FormData();
         formData.append("file", file);
         
-        const uploadRes = await fetch("/api/upload", {
+        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
@@ -64,7 +64,7 @@ export const UploadNoteModal = ({ open, onClose, onUpload }: UploadNoteModalProp
         const { fileUrl } = await uploadRes.json();
         
         // Then create the note with the file URL
-        const res = await fetch("/api/notes/create", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -88,7 +88,7 @@ export const UploadNoteModal = ({ open, onClose, onUpload }: UploadNoteModalProp
       } else {
         // Handle link mode (unchanged)
         if (!linkUrl) return;
-        const res = await fetch("/api/notes/create", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
