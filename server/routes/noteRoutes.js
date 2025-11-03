@@ -1,14 +1,14 @@
 import express from 'express';
+import multer from 'multer';
 import verifyToken from '../middleware/authMiddleware.js';
 import { createNote, getAllNotes, getNoteById, addComment, rateNote, deleteNote } from '../controllers/noteController.js';
-import multer from 'multer';
 
 const router = express.Router();
 
 const upload = multer({ dest: 'uploads/' });
 
 //create a new note 
-router.post("/create", verifyToken, createNote);
+router.post("/create", verifyToken ,upload.single('file'), createNote);
 
 //get all notes (public)
 router.get("/", getAllNotes);

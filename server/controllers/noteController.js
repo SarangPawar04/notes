@@ -4,15 +4,43 @@ import { uploadFile } from "../utils/uploadFile.js";
 //create a note 
 export const createNote = async (req, res) =>{
     try {
+        console.log('Request body:', req.body);
+        console.log('Uploaded file:', req.file);
         
-        const {title, description, category} = req.body;
+        const {title, description, category, fileUrl: incomingFileUrl} = req.body;
+        let fileUrl = incomingFileUrl;
 
-        //upload file to cloudinary 
-        const fileUrl = await uploadFile(req.file.path);
+        // If a file was uploaded, upload it to Supabase
+        if (req.file) {
+            console.log('Processing file upload...');
+            try {
+                fileUrl = await uploadFile(req.file);
+                console.log('File uploaded successfully. URL:', fileUrl);
+            } catch (uploadError) {
+                console.error('Error uploading file:', uploadError);
+                return res.status(500).json({
+                    success: false,
+                    message: `File upload failed: ${uploadError.message}`
+                });
+            }
+        } else if (!incomingFileUrl) {
+            return res.status(400).json({
+                success: false,
+                message: 'No file was uploaded'
+            });
+        }
 
         //check if all fields are there
-        if(!title || !fileUrl || !category){
-            return res.status(400).json({success : false, message : "All required fields must be filled"});
+        if(!title){
+            return res.status(400).json({success : false, message : "Title is required"});
+        }
+
+        if(!category){
+            return res.status(400).json({success : false, message : "Category is required"});
+        }
+
+        if(!fileUrl){
+            return res.status(400).json({success : false, message : "File URL is required"});
         }
 
         const uploaderID = req.user.id;
@@ -21,9 +49,9 @@ export const createNote = async (req, res) =>{
         const note = await Note.create({
             title, 
             description,
-            fileUrl,
             category,
-            uploaderID : req.user.id
+            fileUrl,
+            uploaderID
         });
 
         res.status(201).json({success : true, message : "Note uploaded successfully", note});

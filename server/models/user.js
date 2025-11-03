@@ -16,15 +16,19 @@ const userSchema = new mongoose.Schema(
             lowercase : true
         },
         password : {
-            type : string,
+            type : String,
             required : true
+        },
+        passwordResetToken: {
+            type: String,
+            default: null,
+        },
+        passwordResetExpires: {
+            type: Date,
+            default: null,
         },
     },{timestamps : true}
 )
 
 export const User = mongoose.model("User", userSchema);
 export default User;
-
-function string(string) {
-    throw new Error('Function not implemented.');
-}
