@@ -4,7 +4,7 @@ import Note from "../models/note.js";
 export const addComment = async (req, res) => {
   try {
     const { content } = req.body;
-    const { id: noteId } = req.params;
+    const { noteId } = req.params;
 
     const note = await Note.findById(noteId);
     if (!note) {
@@ -25,7 +25,7 @@ export const addComment = async (req, res) => {
 
 export const getComments = async (req, res) => {
   try {
-    const { id: noteId } = req.params;
+    const { noteId } = req.params;
     const comments = await Comment.find({ noteId })
       .populate("userId", "userName email")
       .sort({ createdAt: -1 });
