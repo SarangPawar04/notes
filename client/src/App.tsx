@@ -91,82 +91,73 @@ const App = () => {
   };
 
   const handleAddComment = async (noteId: string, text: string) => {
-    if (!currentUser) {
-      toast({
-        title: "Login required",
-        description: "Please login to comment.",
-        variant: "destructive",
-      });
-      return;
+  if (!currentUser) {
+    toast({
+      title: "Login required",
+      description: "Please login to comment.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  try {
+    const res = await apiFetch(`/api/comments/${noteId}`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Failed to add comment");
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    // ✅ Create the new comment locally (instant UI update)
+    const newComment: Comment = {
+      id: data.comment._id,
+      noteId,
+      userId: currentUser.id,
+      userName: currentUser.userName,
+      userAvatar: currentUser.email
+        ? `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(
+            currentUser.email
+          )}`
+        : "",
+      content: data.comment.content,
+      createdAt: new Date(data.comment.createdAt),
+    };
 
-    try {
-      const res = await apiFetch(`/api/comments/${noteId}`, {method: "POST",body: JSON.stringify({ text }),});
+    // ✅ Update UI immediately
+    setComments((prev) => ({
+      ...prev,
+      [noteId]: [...(prev[noteId] || []), newComment],
+    }));
 
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId
+          ? { ...note, commentsCount: (note.commentsCount || 0) + 1 }
+          : note
+      )
+    );
 
+    toast({
+      title: "Comment added",
+      description: "Your comment has been posted.",
+    });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    toast({
+      title: "Error",
+      description: "Failed to add comment. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          // Fetch the updated note to get the populated comment
-          const noteRes = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${noteId}`);
-          const noteData = await noteRes.json();
-          
-          if (noteData.success) {
-            const updatedNote = noteData.note;
-            const newComment = updatedNote.comments[updatedNote.comments.length - 1];
-            
-            const mappedComment: Comment = {
-              id: newComment._id,
-              noteId,
-              userId: newComment.user._id,
-              userName: newComment.user.userName,
-              userAvatar: newComment.user.email 
-                ? `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(newComment.user.email)}`
-                : '',
-              content: newComment.content,
-              createdAt: new Date(newComment.createdAt),
-            };
-            
-            setComments((prev) => ({
-              ...prev,
-              [noteId]: [...(prev[noteId] || []), mappedComment],
-            }));
-            
-            setNotes((prev) =>
-              prev.map((note) =>
-                note.id === noteId 
-                  ? { 
-                      ...note, 
-                      commentsCount: updatedNote.comments.length,
-                      comments: updatedNote.comments 
-                    } 
-                  : note
-              )
-            );
-            
-            toast({
-              title: "Comment added",
-              description: "Your comment has been posted.",
-            });
-          }
-        }
-      } else {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to add comment");
-      }
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add comment. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleRate = (noteId: string, rating: number) => {
     if (!currentUser) {
