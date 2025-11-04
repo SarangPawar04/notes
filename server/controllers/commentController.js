@@ -3,7 +3,8 @@ import Note from "../models/note.js";
 
 export const addComment = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { text } = req.body;
+    const content = text;
     const { noteId } = req.params;
 
     const note = await Note.findById(noteId);
