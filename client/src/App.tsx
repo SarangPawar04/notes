@@ -127,7 +127,7 @@ const App = () => {
               userAvatar: newComment.user.email 
                 ? `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(newComment.user.email)}`
                 : '',
-              content: newComment.text,
+              content: newComment.content,
               createdAt: new Date(newComment.createdAt),
             };
             
