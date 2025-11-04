@@ -12,6 +12,7 @@ import Reset from "./pages/Reset";
 import { Navigation } from "./components/Navigation";
 import { UploadNoteModal } from "./components/UploadNoteModal";
 import { SearchResults } from "./pages/SearchResults";
+import { apiFetch } from "./lib/api";
 // import { mockNotes } from "./data/mockData";
 import { Note, Comment, UserProfile } from "./types/note";
 import { useToast } from "./hooks/use-toast";
@@ -66,10 +67,8 @@ const App = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
     const isSaved = savedNoteIds.has(noteId);
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saved/${noteId}`, {
-      method: isSaved ? "DELETE" : "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch(`/api/saved/${noteId}`, {method: isSaved ? "DELETE" : "POST",});
+
     if (res.ok) {
       setSavedNoteIds((prev) => {
         const next = new Set(prev);
@@ -91,7 +90,7 @@ const App = () => {
     toast({ title: "Note uploaded", description: "Your note has been shared!" });
   };
 
-  const handleAddComment = (noteId: string, content: string) => {
+  const handleAddComment = async (noteId: string, text: string) => {
     if (!currentUser) {
       toast({
         title: "Login required",
@@ -100,25 +99,73 @@ const App = () => {
       });
       return;
     }
-    
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      noteId,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userAvatar: currentUser.avatar,
-      content,
-      createdAt: new Date(),
-    };
-    setComments((prev) => ({
-      ...prev,
-      [noteId]: [...(prev[noteId] || []), newComment],
-    }));
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === noteId ? { ...note, commentsCount: note.commentsCount + 1 } : note
-      )
-    );
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await apiFetch(`/api/comments/${noteId}`, {method: "POST",body: JSON.stringify({ text }),});
+
+
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          // Fetch the updated note to get the populated comment
+          const noteRes = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${noteId}`);
+          const noteData = await noteRes.json();
+          
+          if (noteData.success) {
+            const updatedNote = noteData.note;
+            const newComment = updatedNote.comments[updatedNote.comments.length - 1];
+            
+            const mappedComment: Comment = {
+              id: newComment._id,
+              noteId,
+              userId: newComment.user._id,
+              userName: newComment.user.userName,
+              userAvatar: newComment.user.email 
+                ? `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(newComment.user.email)}`
+                : '',
+              content: newComment.text,
+              createdAt: new Date(newComment.createdAt),
+            };
+            
+            setComments((prev) => ({
+              ...prev,
+              [noteId]: [...(prev[noteId] || []), mappedComment],
+            }));
+            
+            setNotes((prev) =>
+              prev.map((note) =>
+                note.id === noteId 
+                  ? { 
+                      ...note, 
+                      commentsCount: updatedNote.comments.length,
+                      comments: updatedNote.comments 
+                    } 
+                  : note
+              )
+            );
+            
+            toast({
+              title: "Comment added",
+              description: "Your comment has been posted.",
+            });
+          }
+        }
+      } else {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to add comment");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add comment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRate = (noteId: string, rating: number) => {
@@ -156,10 +203,8 @@ const App = () => {
   const handleDeleteNote = async (noteId: string) => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${noteId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch(`/api/notes/${noteId}`, {method: "DELETE",});
+
     if (res.ok) {
       setNotes((prev) => prev.filter((n) => n.id !== noteId));
       setSavedNoteIds((prev) => {
@@ -193,6 +238,38 @@ const App = () => {
     }
   };
 
+  // Fetch comments for all notes
+  const fetchComments = async (noteIds: string[]) => {
+    const commentsMap: { [noteId: string]: Comment[] } = {};
+    
+    // Fetch comments for each note
+    await Promise.all(noteIds.map(async (noteId) => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/comments/${noteId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.comments)) {
+            commentsMap[noteId] = data.comments.map((c: any) => ({
+              id: c._id,
+              noteId: c.noteId,
+              userId: c.userId?._id || c.userId,
+              userName: c.userId?.userName || 'Unknown User',
+              userAvatar: c.userId?.email 
+                ? `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(c.userId.email)}` 
+                : '',
+              content: c.content,
+              createdAt: new Date(c.createdAt || Date.now())
+            }));
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching comments for note ${noteId}:`, error);
+      }
+    }));
+    
+    setComments(commentsMap);
+  };
+
   const fetchSaved = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -220,10 +297,22 @@ console.log("🔗 API URL:", import.meta.env.VITE_API_URL);
         sessionStorage.removeItem('fromAuth');
       } catch {}
     }
-    
-    void fetchNotes();
-    if (token) void fetchSaved();
   }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      await fetchNotes();
+      await fetchSaved();
+    };
+    void init();
+  }, []);
+
+  // Fetch comments when notes change
+  useEffect(() => {
+    if (notes.length > 0) {
+      void fetchComments(notes.map(note => note.id));
+    }
+  }, [notes]);
 
   const uploadedNotes = currentUser 
     ? notes.filter((note) => note.authorId === currentUser.id)

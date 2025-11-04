@@ -70,7 +70,7 @@ export const NoteDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0">
+      <DialogContent className="max-w-5xl h-[95vh] p-0 gap-0 overflow-y-hidden">
         <div className="grid md:grid-cols-2 h-full">
           {/* Preview Section */}
           <div className="relative bg-muted flex items-center justify-center">
@@ -124,18 +124,18 @@ export const NoteDetailModal = ({
               </div>
             </DialogHeader>
 
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
+            <ScrollArea className="flex-1 p-4 pb-24 overflow-y-auto">
+              <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground mb-2">{note.title}</h2>
-                  <p className="text-muted-foreground">{note.description}</p>
+                  <h2 className="text-2xl font-bold text-foreground mb-2">{note.title}</h2>
+                  <p className="text-muted-foreground text-base">{note.description}</p>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   {(note.tags || []).map((tag, i) => (
                     <span
                       key={i}
-                      className="px-3 py-1 text-sm rounded-full bg-primary/10 text-primary"
+                      className="px-3 py-1 text-sm rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                     >
                       {tag}
                     </span>
@@ -157,45 +157,74 @@ export const NoteDetailModal = ({
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-border">
-                  <h3 className="font-semibold text-foreground mb-4">
-                    Comments ({comments.length})
+                <div className="pt-6 border-t border-border">
+                  <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                    <span>💬 Comments</span>
+                    <span className="text-base font-normal text-muted-foreground">
+                      ({comments.length})
+                    </span>
                   </h3>
-                  <div className="space-y-4">
-                    {comments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3">
-                        <Avatar className="h-8 w-8 shrink-0">
-                          <AvatarImage src={comment.userAvatar} />
-                          <AvatarFallback>{comment.userName[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {comment.userName}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {comment.createdAt.toLocaleDateString()}
-                            </span>
+                  
+                  {comments.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <p>No comments yet. Be the first to comment!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                      {comments.map((comment) => (
+                        <div 
+                          key={comment.id} 
+                          className="flex gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <Avatar className="h-9 w-9 shrink-0 border border-border">
+                            <AvatarImage src={comment.userAvatar} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {comment.userName[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-foreground">
+                                {comment.userName}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(comment.createdAt).toLocaleString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words">
+                              {comment.content}
+                            </p>
                           </div>
-                          <p className="text-sm text-foreground mt-1">{comment.content}</p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </ScrollArea>
 
-            <div className="p-4 border-t border-border">
-              <div className="flex gap-2">
+            <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
+              <div className="relative">
                 <Input
-                  placeholder="Add a comment..."
+                  placeholder="Write a comment..."
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSubmitComment()}
-                  className="flex-1"
+                  onKeyDown={(e) => {if (e.key === "Enter") {e.preventDefault(); handleSubmitComment();  }}}
+
+                  className="pr-12 h-12 text-base"
                 />
-                <Button onClick={handleSubmitComment} size="icon">
+                <Button 
+                  onClick={handleSubmitComment} 
+                  size="icon" 
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full"
+                  disabled={!commentText.trim()}
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

@@ -7,6 +7,8 @@ import authRoutes from './routes/authRoutes.js';
 import noteRoutes from './routes/noteRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import savedNoteRoutes from './routes/savedNoteRoutes.js';
+import commentRoutes from "./routes/commentRoutes.js";
+
 
 
 const app = express();
@@ -24,6 +26,7 @@ app.use('/api/notes', noteRoutes);
 // routes are used here 
 app.use('/api/auth', authRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use("/api/comments", commentRoutes);
 app.use('/api/saved', savedNoteRoutes);
 
 const Mongo_url = process.env.MONGO_URL;
