@@ -101,7 +101,7 @@ export const Navigation = ({ onUploadClick, onLogout, isGuest }: NavigationProps
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setDarkMode(!darkMode)}
+              onClick={toggleDarkMode}
               className="text-muted-foreground hover:text-foreground"
             >
               {darkMode ? (
